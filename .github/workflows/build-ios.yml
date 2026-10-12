@@ -35,14 +35,14 @@ jobs:
         run: >
           dotnet build app/Lughole.csproj
           -c Release
-          -f net10.0-ios
+          -f net10.0-ios26.0
           -r ios-arm64
           -p:EnableCodeSigning=false
 
       - name: Package .ipa
         run: |
           set -euo pipefail
-          APP=$(find app/bin/Release/net10.0-ios/ios-arm64 -maxdepth 1 -name "*.app" -type d | head -n 1)
+          APP=$(find app/bin/Release/net10.0-ios26.0/ios-arm64 -maxdepth 1 -name "*.app" -type d | head -n 1)
           if [ -z "$APP" ]; then
             echo "No .app bundle found"; find app/bin -maxdepth 4; exit 1
           fi

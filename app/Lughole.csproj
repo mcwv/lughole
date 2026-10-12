@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net10.0-ios</TargetFrameworks>
+    <!-- Pinned to the iOS 26 SDK: GitHub's Mac runners only have Xcode 26 so far. -->
+    <TargetFrameworks>net10.0-ios26.0</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <UseMaui>true</UseMaui>
     <SingleProject>true</SingleProject>
