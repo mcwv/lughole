@@ -24,6 +24,29 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- Plain PNG icons (Platforms/iOS/Resources); the asset-catalog route breaks on GitHub's Mac runners. -->
+	<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>AppIcon60x60</string>
+			</array>
+		</dict>
+	</dict>
+	<key>CFBundleIcons~ipad</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>AppIcon60x60</string>
+				<string>AppIcon76x76</string>
+				<string>AppIcon83.5x83.5</string>
+			</array>
+		</dict>
+	</dict>
 	<!-- Keep playing when the screen is locked or you switch apps. -->
 	<key>UIBackgroundModes</key>
 	<array>
