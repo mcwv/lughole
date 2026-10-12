@@ -14,10 +14,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # .NET for iOS 27 needs Xcode 27; take the newest one on the runner.
       - name: Select Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
+        run: |
+          ls -d /Applications/Xcode*.app
+          XCODE=$(ls -d /Applications/Xcode_*.app | sort -V | tail -n 1)
+          echo "Using $XCODE"
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          echo "DEVELOPER_DIR=$XCODE/Contents/Developer" >> "$GITHUB_ENV"
+          xcodebuild -version
 
       - uses: actions/setup-dotnet@v5
         with:
