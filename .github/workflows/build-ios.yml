@@ -14,14 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # Newest Xcode on the runner; the app pins the iOS 26.0 SDK (see app/Lughole.csproj).
-      - name: Select Xcode
-        run: |
-          XCODE=$(ls -d /Applications/Xcode_*.app | sort -V | tail -n 1)
-          echo "Using $XCODE"
-          sudo xcode-select -s "$XCODE/Contents/Developer"
-          echo "DEVELOPER_DIR=$XCODE/Contents/Developer" >> "$GITHUB_ENV"
-          xcodebuild -version
+      - name: Show Xcode
+        run: xcodebuild -version
 
       - uses: actions/setup-dotnet@v5
         with:

@@ -24,8 +24,6 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>XSAppIconAssets</key>
-	<string>Assets.xcassets/appicon.appiconset</string>
 	<!-- Keep playing when the screen is locked or you switch apps. -->
 	<key>UIBackgroundModes</key>
 	<array>
