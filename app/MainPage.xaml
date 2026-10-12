@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Lughole.MainPage"
+             BackgroundColor="#14161A">
+
+    <VerticalStackLayout Padding="28" Spacing="16" VerticalOptions="Center">
+
+        <Label Text="Lughole"
+               FontSize="40"
+               FontAttributes="Bold"
+               TextColor="#F2B544"
+               HorizontalTextAlignment="Center" />
+
+        <Label Text="Your PC's sound, in your ear."
+               FontSize="15"
+               TextColor="#A0A4AB"
+               HorizontalTextAlignment="Center" />
+
+        <Label Text="PC address"
+               FontSize="13"
+               TextColor="#A0A4AB"
+               Margin="0,24,0,0" />
+
+        <Entry x:Name="HostEntry"
+               Placeholder="e.g. 192.168.1.10"
+               Keyboard="Url"
+               TextColor="White"
+               PlaceholderColor="#5C6068"
+               BackgroundColor="#1E2126"
+               ClearButtonVisibility="WhileEditing" />
+
+        <Button x:Name="ConnectButton"
+                Text="Listen"
+                FontSize="18"
+                FontAttributes="Bold"
+                HeightRequest="54"
+                CornerRadius="27"
+                BackgroundColor="#F2B544"
+                TextColor="#14161A"
+                Clicked="OnConnectClicked" />
+
+        <Label x:Name="StatusLabel"
+               Text="Start Lughole.Server on your PC, then tap Listen."
+               FontSize="13"
+               TextColor="#A0A4AB"
+               HorizontalTextAlignment="Center" />
+
+    </VerticalStackLayout>
+</ContentPage>

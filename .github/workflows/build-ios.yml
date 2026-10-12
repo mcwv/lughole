@@ -1,0 +1,53 @@
+name: Build iPhone app
+
+on:
+  push:
+    paths:
+      - "app/**"
+      - ".github/workflows/build-ios.yml"
+  workflow_dispatch:
+
+jobs:
+  ipa:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Install MAUI workload
+        run: dotnet workload install maui-ios
+
+      - name: Build (unsigned)
+        run: >
+          dotnet build app/Lughole.csproj
+          -c Release
+          -f net10.0-ios
+          -r ios-arm64
+          -p:EnableCodeSigning=false
+
+      - name: Package .ipa
+        run: |
+          set -euo pipefail
+          APP=$(find app/bin/Release/net10.0-ios/ios-arm64 -maxdepth 1 -name "*.app" -type d | head -n 1)
+          if [ -z "$APP" ]; then
+            echo "No .app bundle found"; find app/bin -maxdepth 4; exit 1
+          fi
+          mkdir -p out/Payload
+          cp -R "$APP" out/Payload/
+          (cd out && zip -qr ../Lughole.ipa Payload)
+          ls -lh Lughole.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Lughole-ipa
+          path: Lughole.ipa
+          retention-days: 30

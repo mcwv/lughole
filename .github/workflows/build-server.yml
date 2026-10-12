@@ -1,0 +1,34 @@
+name: Build Windows server
+
+on:
+  push:
+    paths:
+      - "server/**"
+      - ".github/workflows/build-server.yml"
+  workflow_dispatch:
+
+jobs:
+  exe:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Publish single-file exe
+        run: >
+          dotnet publish server/Lughole.Server.csproj
+          -c Release
+          -r win-x64
+          --self-contained
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -o publish
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Lughole-Server-exe
+          path: publish/Lughole.Server.exe
+          retention-days: 30
