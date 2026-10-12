@@ -17,6 +17,8 @@
     <ApplicationVersion>1</ApplicationVersion>
 
     <SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
+    <!-- The iOS 26.0 SDK pack insists on Xcode 26.0 exactly; any newer 26.x works fine. -->
+    <ValidateXcodeVersion>false</ValidateXcodeVersion>
   </PropertyGroup>
 
   <ItemGroup>
