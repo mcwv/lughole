@@ -17,16 +17,32 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          echo "macOS: $(sw_vers -productVersion)"
+          echo "shortcuts executable: $(command -v shortcuts)"
+          shortcuts help sign || true
           mkdir -p shortcut-builder/signed
           shopt -s nullglob
           files=(shortcut-builder/unsigned/*.shortcut)
           if (( ${#files[@]} == 0 )); then
-            echo "No unsigned shortcuts found" >&2
+            echo "::error::No unsigned shortcuts found"
             exit 1
           fi
           for file in "${files[@]}"; do
+            echo "::group::Validate $(basename "$file")"
+            file "$file"
             plutil -lint "$file"
-            shortcuts sign --mode anyone --input "$file" --output "shortcut-builder/signed/$(basename "$file")"
+            binary="$(mktemp -t shortcut-XXXXXX)"
+            # Apple's signing command expects a native property-list shortcut.
+            # Normalise the source XML to binary plist before signing.
+            plutil -convert binary1 -o "$binary" "$file"
+            file "$binary"
+            plutil -lint "$binary"
+            echo "::endgroup::"
+            echo "::group::Sign $(basename "$file")"
+            shortcuts sign --mode anyone --input "$binary" --output "shortcut-builder/signed/$(basename "$file")"
+            echo "::endgroup::"
+            test -s "shortcut-builder/signed/$(basename "$file")"
+            rm -f "$binary"
           done
       - uses: actions/upload-artifact@v4
         with:
