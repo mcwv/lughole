@@ -1,4 +1,4 @@
-name: Sign Apple Shortcut
+name: Validate Apple Shortcut (unsigned)
 on:
   workflow_dispatch:
   push:
@@ -7,50 +7,43 @@ on:
       - 'shortcut-builder/unsigned/*.shortcut'
       - '.github/workflows/sign-shortcut.yml'
 jobs:
-  sign:
+  validate:
     runs-on: macos-15
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - name: Verify and sign
+      - name: Validate unsigned shortcut format
         shell: bash
         run: |
           set -euo pipefail
-          echo "macOS: $(sw_vers -productVersion)"
-          echo "shortcuts executable: $(command -v shortcuts)"
-          mkdir -p shortcut-builder/signed
           shopt -s nullglob
           files=(shortcut-builder/unsigned/*.shortcut)
           if (( ${#files[@]} == 0 )); then
-            echo "::error::No unsigned shortcuts found"
+            echo "::error::No unsigned shortcut files found"
             exit 1
           fi
-          for file in "${files[@]}"; do
-            echo "::group::Validate $(basename "$file")"
-            file "$file"
-            plutil -lint "$file"
+          for input in "${files[@]}"; do
+            echo "::group::Validate $(basename "$input")"
+            file "$input"
+            plutil -lint "$input"
+            python3 - "$input" <<'PY'
+          import plistlib, sys
+          with open(sys.argv[1], "rb") as f:
+              workflow = plistlib.load(f)
+          actions = workflow.get("WFWorkflowActions")
+          if not isinstance(actions, list) or not actions:
+              raise SystemExit("Shortcut must contain at least one action")
+          for action in actions:
+              if not isinstance(action, dict) or not action.get("WFWorkflowActionIdentifier"):
+                  raise SystemExit("Shortcut action is missing an identifier")
+          print(f"Valid plist structure, {len(actions)} action(s)")
+          PY
             echo "::endgroup::"
-            output="shortcut-builder/signed/$(basename "$file")"
-            echo "::group::Sign original $(basename "$file")"
-            if shortcuts sign --mode anyone --input "$file" --output "$output"; then
-              echo "Signed XML plist successfully"
-            else
-              echo "::warning::Original XML sign failed, retrying with binary plist"
-              binary_file="$(mktemp -d)/$(basename "$file")"
-              plutil -convert binary1 -o "$binary_file" "$file"
-              file "$binary_file"
-              plutil -lint "$binary_file"
-              shortcuts sign --mode anyone --input "$binary_file" --output "$output"
-              rm -f "$binary_file"
-            fi
-            echo "::endgroup::"
-            test -s "$output"
-            file "$output"
-            head -c 4 "$output" | od -An -tx1
           done
-      - uses: actions/upload-artifact@v4
+      - name: Upload explicitly unsigned test file
+        uses: actions/upload-artifact@v4
         with:
-          name: signed-shortcut-smoke-test
-          path: shortcut-builder/signed/*.shortcut
+          name: UNSIGNED-shortcut-format-smoke-test
+          path: shortcut-builder/unsigned/*.shortcut
           if-no-files-found: error
