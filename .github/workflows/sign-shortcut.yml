@@ -1,0 +1,35 @@
+name: Sign Apple Shortcut
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/instagram-shortcut-builder]
+    paths:
+      - 'shortcut-builder/unsigned/*.shortcut'
+      - '.github/workflows/sign-shortcut.yml'
+jobs:
+  sign:
+    runs-on: macos-15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify and sign
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p shortcut-builder/signed
+          shopt -s nullglob
+          files=(shortcut-builder/unsigned/*.shortcut)
+          if (( ${#files[@]} == 0 )); then
+            echo "No unsigned shortcuts found" >&2
+            exit 1
+          fi
+          for file in "${files[@]}"; do
+            plutil -lint "$file"
+            shortcuts sign --mode anyone --input "$file" --output "shortcut-builder/signed/$(basename "$file")"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: signed-shortcut-smoke-test
+          path: shortcut-builder/signed/*.shortcut
+          if-no-files-found: error
