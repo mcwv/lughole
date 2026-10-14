@@ -28,15 +28,39 @@ jobs:
           path: output/controller/
           if-no-files-found: error
 
-  ios-simulator:
-    name: MAUI iOS simulator build (unsigned)
-    runs-on: macos-15
+  ios-build:
+    name: MAUI iOS build and unsigned device IPA
+    runs-on: xcode-27
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          dotnet --version
       - name: Install iOS MAUI workload
         run: dotnet workload install maui-ios
       - name: Build iOS simulator without signing
         run: dotnet build iOSReceiver/ZeroCastReceiver.csproj -c Release -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64 -p:EnableCodeSigning=false --nologo
+      - name: Publish unsigned physical-device app
+        run: dotnet publish iOSReceiver/ZeroCastReceiver.csproj -c Release -f net10.0-ios -r ios-arm64 -p:EnableCodeSigning=false -p:ArchiveOnBuild=false -o output/ios-device --nologo
+      - name: Package unsigned IPA for SideStore signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="$(find output/ios-device -type d -name '*.app' -print -quit)"
+          if [ -z "$APP" ]; then
+            echo "No device .app bundle produced"; exit 1
+          fi
+          mkdir -p output/ipa/Payload
+          cp -R "$APP" output/ipa/Payload/
+          cd output/ipa
+          zip -qr ../Lughole-unsigned.ipa Payload
+          unzip -l ../Lughole-unsigned.ipa | head -35
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lughole-unsigned-ios-ipa
+          path: output/Lughole-unsigned.ipa
+          if-no-files-found: error
