@@ -9,15 +9,32 @@ namespace ZeroCastReceiver;
 public partial class MainPage : ContentPage
 {
     private bool _isListening;
+    private readonly ControllerReceiver _controllerReceiver = new();
 
     public MainPage()
     {
         InitializeComponent();
+        _controllerReceiver.StatusChanged += status => ControllerStatusLabel.Text = status;
         ListenButton.Clicked += (_, _) =>
         {
+            if (_isListening) return;
             _isListening = true;
+            ListenButton.IsEnabled = false;
             _ = Task.Run(StartListening);
         };
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        try { _controllerReceiver.Start(); }
+        catch (Exception ex) { ControllerStatusLabel.Text = $"Controller listener error: {ex.Message}"; }
+    }
+
+    protected override void OnDisappearing()
+    {
+        _controllerReceiver.Dispose();
+        base.OnDisappearing();
     }
 
     private void StartListening()
