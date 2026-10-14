@@ -1,0 +1,42 @@
+name: Build checks
+
+on:
+  push:
+    branches: [main, feature/xinput-controller-stream]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-controller:
+    name: Windows controller sender
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build controller sender
+        run: dotnet build ControllerServer/ControllerServer.csproj -c Release --nologo
+      - name: Publish Windows sender
+        run: dotnet publish ControllerServer/ControllerServer.csproj -c Release -r win-x64 --self-contained false -o output/controller
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lughole-controller-win-x64
+          path: output/controller/
+          if-no-files-found: error
+
+  ios-simulator:
+    name: MAUI iOS simulator build (unsigned)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install iOS MAUI workload
+        run: dotnet workload install maui-ios
+      - name: Build iOS simulator without signing
+        run: dotnet build iOSReceiver/ZeroCastReceiver.csproj -c Release -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64 -p:EnableCodeSigning=false --nologo
