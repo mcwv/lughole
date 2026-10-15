@@ -46,19 +46,13 @@ jobs:
         run: dotnet build iOSReceiver/ZeroCastReceiver.csproj -c Release -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64 -p:EnableCodeSigning=false --nologo
       - name: Publish unsigned physical-device app
         run: dotnet publish iOSReceiver/ZeroCastReceiver.csproj -c Release -f net10.0-ios -r ios-arm64 -p:EnableCodeSigning=false -p:ArchiveOnBuild=false -o output/ios-device --nologo
-      - name: Package unsigned IPA for SideStore signing
+      - name: Collect unsigned device IPA
         shell: bash
         run: |
           set -euo pipefail
-          APP="$(find output/ios-device -type d -name '*.app' -print -quit)"
-          if [ -z "$APP" ]; then
-            echo "No device .app bundle produced"; exit 1
-          fi
-          mkdir -p output/ipa/Payload
-          cp -R "$APP" output/ipa/Payload/
-          cd output/ipa
-          zip -qr ../Lughole-unsigned.ipa Payload
-          unzip -l ../Lughole-unsigned.ipa | head -35
+          test -s output/ios-device/ZeroCastReceiver.ipa
+          cp output/ios-device/ZeroCastReceiver.ipa output/Lughole-unsigned.ipa
+          unzip -t output/Lughole-unsigned.ipa | tail -1
       - uses: actions/upload-artifact@v4
         with:
           name: lughole-unsigned-ios-ipa
