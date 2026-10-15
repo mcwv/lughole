@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ZeroCastReceiver.MainPage"
+             Title="Lughole">
+  <VerticalStackLayout Padding="24" Spacing="16" VerticalOptions="Center">
+    <Label Text="Lughole" FontSize="32" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+    <Button x:Name="ListenButton" Text="Start audio receiver" />
+    <Label Text="Audio: UDP 58091 | Controller: UDP 58092" HorizontalTextAlignment="Center" />
+    <Label x:Name="ControllerStatusLabel" Text="Waiting for PC controller stream..." LineBreakMode="WordWrap" HorizontalTextAlignment="Center" />
+  </VerticalStackLayout>
+</ContentPage>

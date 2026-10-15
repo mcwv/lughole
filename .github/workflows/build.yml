@@ -1,0 +1,60 @@
+name: Build checks
+
+on:
+  push:
+    branches: [main, feature/xinput-controller-stream]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-controller:
+    name: Windows controller sender
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build controller sender
+        run: dotnet build ControllerServer/ControllerServer.csproj -c Release --nologo
+      - name: Publish Windows sender
+        run: dotnet publish ControllerServer/ControllerServer.csproj -c Release -r win-x64 --self-contained false -o output/controller
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lughole-controller-win-x64
+          path: output/controller/
+          if-no-files-found: error
+
+  ios-build:
+    name: MAUI iOS build and unsigned device IPA
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          dotnet --version
+      - name: Install iOS MAUI workload
+        run: dotnet workload install maui-ios
+      - name: Build iOS simulator without signing
+        run: dotnet build iOSReceiver/ZeroCastReceiver.csproj -c Release -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64 -p:EnableCodeSigning=false --nologo
+      - name: Publish unsigned physical-device app
+        run: dotnet publish iOSReceiver/ZeroCastReceiver.csproj -c Release -f net10.0-ios -r ios-arm64 -p:EnableCodeSigning=false -p:ArchiveOnBuild=false -o output/ios-device --nologo
+      - name: Collect unsigned device IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s output/ios-device/ZeroCastReceiver.ipa
+          cp output/ios-device/ZeroCastReceiver.ipa output/Lughole-unsigned.ipa
+          unzip -t output/Lughole-unsigned.ipa | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lughole-unsigned-ios-ipa
+          path: output/Lughole-unsigned.ipa
+          if-no-files-found: error
