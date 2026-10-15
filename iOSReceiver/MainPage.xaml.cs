@@ -67,7 +67,7 @@ public partial class MainPage : ContentPage
                     continue;
 
                 var buffer = new AVAudioPcmBuffer(format, (uint)decodedFrames);
-                buffer.FrameLength = (nuint)decodedFrames;
+                buffer.FrameLength = (uint)decodedFrames;
 
                 unsafe
                 {
