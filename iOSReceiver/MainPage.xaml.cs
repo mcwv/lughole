@@ -44,7 +44,7 @@ public partial class MainPage : ContentPage
         var playerNode = new AVAudioPlayerNode();
         engine.AttachNode(playerNode);
 
-        var format = new AVAudioFormat(AVAudioCommonFormat.PcmFormatFloat32, 48000, 2, false);
+        var format = new AVAudioFormat(AVAudioCommonFormat.PCMFloat32, 48000, 2, false);
         engine.Connect(playerNode, engine.OutputNode, format);
         engine.StartAndReturnError(out _);
         playerNode.Play();
@@ -66,7 +66,7 @@ public partial class MainPage : ContentPage
                 if (decodedFrames <= 0)
                     continue;
 
-                var buffer = new AVAudioPcmBuffer(format, (nuint)decodedFrames);
+                var buffer = new AVAudioPcmBuffer(format, (uint)decodedFrames);
                 buffer.FrameLength = (nuint)decodedFrames;
 
                 unsafe
@@ -78,7 +78,7 @@ public partial class MainPage : ContentPage
                     }
                 }
 
-                playerNode.ScheduleBuffer(buffer, out _);
+                playerNode.ScheduleBuffer(buffer, null);
             }
             catch
             {
