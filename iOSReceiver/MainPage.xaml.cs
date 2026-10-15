@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 using AVFoundation;
-using Concentus;
+using Concentus.Structs;
 using Microsoft.Maui.Controls;
 
 namespace ZeroCastReceiver;
@@ -44,7 +44,7 @@ public partial class MainPage : ContentPage
         var playerNode = new AVAudioPlayerNode();
         engine.AttachNode(playerNode);
 
-        var format = new AVAudioFormat(AVAudioCommonFormat.PCMFormatFloat32, 48000, 2, false);
+        var format = new AVAudioFormat(AVAudioCommonFormat.PcmFormatFloat32, 48000, 2, false);
         engine.Connect(playerNode, engine.OutputNode, format);
         engine.StartAndReturnError(out _);
         playerNode.Play();
@@ -66,7 +66,7 @@ public partial class MainPage : ContentPage
                 if (decodedFrames <= 0)
                     continue;
 
-                var buffer = new AVAudioPCMBuffer(format, (nuint)decodedFrames);
+                var buffer = new AVAudioPcmBuffer(format, (nuint)decodedFrames);
                 buffer.FrameLength = (nuint)decodedFrames;
 
                 unsafe
