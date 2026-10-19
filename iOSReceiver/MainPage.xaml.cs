@@ -45,7 +45,7 @@ public partial class MainPage : ContentPage
         var playerNode = new AVAudioPlayerNode();
         engine.AttachNode(playerNode);
 
-        var format = new AVAudioFormat(AVAudioCommonFormat.PCMFloat32, 48000, 2, false);
+        var format = new AVAudioFormat(AVAudioCommonFormat.PCMFloat32, 48000, 2, true);
         engine.Connect(playerNode, engine.OutputNode, format);
         engine.StartAndReturnError(out _);
         playerNode.Play();
@@ -74,9 +74,12 @@ public partial class MainPage : ContentPage
                 // samples into the native playback buffer (the old code copied
                 // the managed array back into itself and played silence).
                 var channels = buffer.FloatChannelData;
-                if (channels is null || channels.Length == 0)
+                if (channels == IntPtr.Zero)
                     throw new InvalidOperationException("No native float audio buffer");
-                Marshal.Copy(pcmOut, 0, channels[0], decodedFrames * 2);
+                IntPtr samples = Marshal.ReadIntPtr(channels);
+                if (samples == IntPtr.Zero)
+                    throw new InvalidOperationException("No native float sample data");
+                Marshal.Copy(pcmOut, 0, samples, decodedFrames * 2);
 
                 playerNode.ScheduleBuffer(buffer, null);
             }
