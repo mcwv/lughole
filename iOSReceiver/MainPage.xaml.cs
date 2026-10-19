@@ -1,23 +1,41 @@
 using System.Net;
 using System.Net.Sockets;
 using AVFoundation;
-using Concentus;
+using Concentus.Structs;
 using Microsoft.Maui.Controls;
+using System.Runtime.InteropServices;
 
 namespace ZeroCastReceiver;
 
 public partial class MainPage : ContentPage
 {
     private bool _isListening;
+    private readonly ControllerReceiver _controllerReceiver = new();
 
     public MainPage()
     {
         InitializeComponent();
+        _controllerReceiver.StatusChanged += status => ControllerStatusLabel.Text = status;
         ListenButton.Clicked += (_, _) =>
         {
+            if (_isListening) return;
             _isListening = true;
+            ListenButton.IsEnabled = false;
             _ = Task.Run(StartListening);
         };
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        try { _controllerReceiver.Start(); }
+        catch (Exception ex) { ControllerStatusLabel.Text = $"Controller listener error: {ex.Message}"; }
+    }
+
+    protected override void OnDisappearing()
+    {
+        _controllerReceiver.Dispose();
+        base.OnDisappearing();
     }
 
     private void StartListening()
@@ -27,7 +45,7 @@ public partial class MainPage : ContentPage
         var playerNode = new AVAudioPlayerNode();
         engine.AttachNode(playerNode);
 
-        var format = new AVAudioFormat(AVAudioCommonFormat.PCMFormatFloat32, 48000, 2, false);
+        var format = new AVAudioFormat(AVAudioCommonFormat.PCMFloat32, 48000, 2, true);
         engine.Connect(playerNode, engine.OutputNode, format);
         engine.StartAndReturnError(out _);
         playerNode.Play();
@@ -49,19 +67,21 @@ public partial class MainPage : ContentPage
                 if (decodedFrames <= 0)
                     continue;
 
-                var buffer = new AVAudioPCMBuffer(format, (nuint)decodedFrames);
-                buffer.FrameLength = (nuint)decodedFrames;
+                var buffer = new AVAudioPcmBuffer(format, (uint)decodedFrames);
+                buffer.FrameLength = (uint)decodedFrames;
 
-                unsafe
-                {
-                    fixed (float* ptr = pcmOut)
-                    {
-                        var data = (IntPtr)ptr;
-                        System.Runtime.InteropServices.Marshal.Copy(pcmOut, 0, data, decodedFrames * 2);
-                    }
-                }
+                // The decoder outputs interleaved stereo floats. Copy those actual
+                // samples into the native playback buffer (the old code copied
+                // the managed array back into itself and played silence).
+                var channels = buffer.FloatChannelData;
+                if (channels == IntPtr.Zero)
+                    throw new InvalidOperationException("No native float audio buffer");
+                IntPtr samples = Marshal.ReadIntPtr(channels);
+                if (samples == IntPtr.Zero)
+                    throw new InvalidOperationException("No native float sample data");
+                Marshal.Copy(pcmOut, 0, samples, decodedFrames * 2);
 
-                playerNode.ScheduleBuffer(buffer, out _);
+                playerNode.ScheduleBuffer(buffer, null);
             }
             catch
             {
