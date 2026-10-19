@@ -1,8 +1,6 @@
 name: Build checks
 
 on:
-  push:
-    branches: [main, feature/xinput-controller-stream]
   pull_request:
   workflow_dispatch:
 
