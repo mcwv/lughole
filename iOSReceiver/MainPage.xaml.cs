@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using AVFoundation;
 using Concentus.Structs;
 using Microsoft.Maui.Controls;
+using System.Runtime.InteropServices;
 
 namespace ZeroCastReceiver;
 
@@ -69,14 +70,13 @@ public partial class MainPage : ContentPage
                 var buffer = new AVAudioPcmBuffer(format, (uint)decodedFrames);
                 buffer.FrameLength = (uint)decodedFrames;
 
-                unsafe
-                {
-                    fixed (float* ptr = pcmOut)
-                    {
-                        var data = (IntPtr)ptr;
-                        System.Runtime.InteropServices.Marshal.Copy(pcmOut, 0, data, decodedFrames * 2);
-                    }
-                }
+                // The decoder outputs interleaved stereo floats. Copy those actual
+                // samples into the native playback buffer (the old code copied
+                // the managed array back into itself and played silence).
+                var channels = buffer.FloatChannelData;
+                if (channels is null || channels.Length == 0)
+                    throw new InvalidOperationException("No native float audio buffer");
+                Marshal.Copy(pcmOut, 0, channels[0], decodedFrames * 2);
 
                 playerNode.ScheduleBuffer(buffer, null);
             }
